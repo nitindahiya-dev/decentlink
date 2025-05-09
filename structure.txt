@@ -1,0 +1,99 @@
+decentlink/
+├── contract/programs/registry/    ← Anchor program
+│   └── src/lib.rs
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── ipfs/
+│   │   │       └── add/
+│   │   │           └── route.ts   ← Pinata upload route
+│   │   ├── [shortCode]/page.tsx   ← resolver page
+│   │   ├── globals.css
+│   │   ├── layout-client.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx               ← main UI
+│   ├── analytics/page.tsx         ← Analytics UI
+│   ├── components/
+│   │   ├── ConnectWallet.tsx
+│   │   ├── UrlShortener.tsx
+│   │   └── Header.tsx
+│   ├── idl/registry.json          ← Anchor IDL 
+│   └── lib/                       ← remove ipfs.ts from here
+├── Anchor.toml
+├── package.json
+└── tailwind.config.ts
+
+
+
+
+| Concern           | Decentralized Hybrid                                      
+|-------------------|---------------------------------------------------------------------------------------------------
+| **API Layer**     | Edge Functions + Peer-to-peer libp2p nodes              
+| **Mapping Store** | IPFS + DHT (Pinning) + Smart-Contract anchor             
+| **Auth**          | Wallet-based Web3Auth / DIDs                              
+| **Cache**         | Edge Cache + DHT local caches                             
+| **Analytics**     | Event logs on IPFS + off-chain processing; optionally anchored hashes on chain for auditability 
+| **Governance**    | DAO-controlled releases; on-chain proposals for fee model or feature flags 
+
+This format provides a clear overview of your project structure and the architectural considerations for different approaches.
+
+
+Decentralization
+When you say “decentralized,” you essentially want no single point of control or failure, and—ideally—an open, peer-to-peer or blockchain-based registry for short codes.
+
+1 Decentralized Storage & Indexing
+a) IPFS / libp2p / OrbitDB:
+
+Store mapping documents (e.g. { short: "abc123", url: "https://…" }) on IPFS.
+
+Use a DHT (Distributed Hash Table) via libp2p so any node can resolve “abc123” by looking it up in the DHT.
+
+b) Pinning & Replication:
+
+Run or incentivize a set of “pinning nodes” to keep frequently used mapping CIDs available across the network.
+
+2 Blockchain-Anchored Registry
+a) Smart Contract Registry:
+
+Deploy a minimal smart contract (Ethereum, Polygon, Solana, etc.) that maps bytes6 shortCode → bytes32 IPFS_CID.
+
+Users can submit/register short codes by sending a small transaction (gas fee + nominal registry fee).
+
+b) Off-Chain Lookups with On-Chain Verification:
+
+Clients first query an off-chain DHT or IPFS gateway; then verify the result against the on-chain hash for tamper-proofing.
+
+c) Incentive / Token Model:
+
+Issue a small fungible token so that node operators are rewarded for hosting and serving mappings.
+
+3 Decentralized Identity & Auth
+a) Wallet-Based Login (Web3Auth / Social logins):
+
+Allow users to authenticate via their Ethereum/Phantom/Solana wallet—no central user database.
+
+b) DID / Verifiable Credentials:
+
+Issue a Decentralized Identifier (DID) for every creator, signed by a root authority or via a blockchain.
+
+4 Governance & Upgradability
+a) DAO Structure:
+
+If you want community governance over new features or fee schedules, spin up a lightweight DAO (e.g. Aragon, Snapshot).
+
+b) Upgradeable Smart Contracts:
+
+Use proxy patterns so that the registry contract can be upgraded by a multi-sig or DAO vote.
+
+
+
+What’s next?
+Try it out: run npm run dev, connect Phantom, shorten a URL—watch it appear on IPFS & Solana.
+
+Pinning: sign up with Pinata or run your own go-ipfs daemon for durability.
+
+Analytics: append click-logs to IPFS or push events on-chain.
+
+Governance: later add a DAO to vote on fees or pinning incentives.
+
+Feel free to ask for code snippets on any spot!

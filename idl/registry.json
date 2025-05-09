@@ -1,0 +1,93 @@
+{
+    "address": "Etr537JjVtMhC6YNj6k2sFd22iCYrVNwnnjif4hXjfTJ",
+    "metadata": {
+      "name": "registry",
+      "version": "0.1.0",
+      "spec": "0.1.0",
+      "description": "Created with Anchor"
+    },
+    "instructions": [
+      {
+        "name": "register",
+        "discriminator": [
+          211,
+          124,
+          67,
+          15,
+          211,
+          194,
+          178,
+          240
+        ],
+        "accounts": [
+          {
+            "name": "entry",
+            "writable": true,
+            "signer": true
+          },
+          {
+            "name": "authority",
+            "writable": true,
+            "signer": true
+          },
+          {
+            "name": "system_program",
+            "address": "11111111111111111111111111111111"
+          }
+        ],
+        "args": [
+          {
+            "name": "short",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
+          },
+          {
+            "name": "cid",
+            "type": "bytes"
+          }
+        ]
+      }
+    ],
+    "accounts": [
+      {
+        "name": "Entry",
+        "discriminator": [
+          63,
+          18,
+          152,
+          113,
+          215,
+          246,
+          221,
+          250
+        ]
+      }
+    ],
+    "types": [
+      {
+        "name": "Entry",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "short",
+              "type": {
+                "array": [
+                  "u8",
+                  6
+                ]
+              }
+            },
+            {
+              "name": "cid",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    ]
+  }
