@@ -1,26 +1,28 @@
 decentlink/
-├── contracts/
-│   ├── Registry.sol
-│   └── build/RegistryABI.json
-├── dapp/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── resolve/
-│   │   │   │   └── route.ts
-│   │   │   ├── layout.tsx      # wraps WalletProvider & Edge Cache
-│   │   │   └── page.tsx        # shows UrlShortener + ConnectWallet
-│   │   ├── components/
-│   │   │   ├── UrlShortener.tsx
-│   │   │   ├── ConnectWallet.tsx
-│   │   │   └── Analytics.tsx
-│   │   ├── lib/
-│   │   │   ├── contract.ts
-│   │   │   ├── ipfs.ts
-│   │   │   └── did.ts
-│   │   └── globals.css
-│   ├── package.json
-│   └── tailwind.config.ts
-└── README.md
+├── contract/programs/registry/    ← Anchor program
+│   └── src/lib.rs
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── ipfs/
+│   │   │       └── add/
+│   │   │           └── route.ts   ← Pinata upload route
+│   │   ├── [shortCode]/page.tsx   ← resolver page
+│   │   ├── globals.css
+│   │   ├── layout-client.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx               ← main UI
+│   ├── analytics/page.tsx         ← Analytics UI
+│   ├── components/
+│   │   ├── ConnectWallet.tsx
+│   │   ├── UrlShortener.tsx
+│   │   └── Header.tsx
+│   ├── idl/registry.json          ← Anchor IDL 
+│   └── lib/                       ← remove ipfs.ts from here
+├── Anchor.toml
+├── package.json
+└── tailwind.config.ts
+
 
 
 
@@ -83,3 +85,15 @@ b) Upgradeable Smart Contracts:
 
 Use proxy patterns so that the registry contract can be upgraded by a multi-sig or DAO vote.
 
+
+
+What’s next?
+Try it out: run npm run dev, connect Phantom, shorten a URL—watch it appear on IPFS & Solana.
+
+Pinning: sign up with Pinata or run your own go-ipfs daemon for durability.
+
+Analytics: append click-logs to IPFS or push events on-chain.
+
+Governance: later add a DAO to vote on fees or pinning incentives.
+
+Feel free to ask for code snippets on any spot!

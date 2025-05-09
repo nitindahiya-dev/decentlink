@@ -1,19 +1,27 @@
 // src/app/layout-client.tsx
 "use client";
-
+import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./globals.css";
+import { SolanaProvider } from "../components/ConnectWallet";
+
+export const metadata = {
+  title: "SillyLink",
+  description: "Web3 URL Shortener on Solana + IPFS",
+};
+
 export default function LayoutClient({
-    children,
+  children,
 }: {
-    children: React.ReactNode
+  children: React.ReactNode
 }) {
-    return (
-        <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-        </div>
-    );
+  return (
+    <SolanaProvider>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    </SolanaProvider>
+  );
 }
