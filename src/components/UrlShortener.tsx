@@ -1,74 +1,77 @@
-// src/components/UrlShortener.tsx
 "use client";
 import { useState } from "react";
 import { ClipboardIcon, LinkIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { SystemProgram } from "@solana/web3.js";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
-import idl from "@/idl/registry.json";
+import { registryContract } from "../utils/ethers";
+import { ethers } from "ethers";
 
 export default function UrlShortener() {
   const [longUrl, setLongUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const BASE = process.env.NEXT_PUBLIC_BASE_URL!;
 
-  const wallet = useWallet();
-  const { connection } = useConnection();
+  // Check for Ethereum wallet (e.g., MetaMask)
+  const hasWallet = typeof window !== "undefined" && window.ethereum;
 
-  function generateShortCode(len = 7) {
+  function genCode(len = 6) {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     return Array.from({ length: len }, () => chars.charAt(Math.random() * chars.length | 0)).join("");
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setIsLoading(true);
+    setError("");
+    setIsLoading(true);
 
+    // Validate URL
     if (!longUrl) {
-      setError("Please enter a URL"); setIsLoading(false); return;
+      setError("Please enter a URL");
+      setIsLoading(false);
+      return;
     }
-    try { new URL(longUrl); } catch {
-      setError("Invalid URL"); setIsLoading(false); return;
-    }
-    if (!wallet.connected) {
-      setError("Connect your wallet"); setIsLoading(false); return;
+    try {
+      new URL(longUrl);
+    } catch {
+      setError("Invalid URL");
+      setIsLoading(false);
+      return;
     }
 
-    const shortCode = generateShortCode();
-    try {
-      // 1) Upload to IPFS via our serverless API
+    // Check wallet connection
+    if (!hasWallet) {
+      setError("Please connect an Ethereum wallet (e.g., MetaMask)");
+      setIsLoading(false);
+      return;
+    }
+
+    const code = genCode();
+        try {
+      // Upload to IPFS
       const res = await fetch("/api/ipfs/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ short: shortCode, url: longUrl }),
+        body: JSON.stringify({ short: code, url: longUrl }),
       });
       if (!res.ok) {
         const text = await res.text();
-        console.error("IPFS API Error:", text);
-        throw new Error("IPFS upload failed");
+        throw new Error(text || "IPFS upload failed");
       }
-      const { cid, error: ipfsErr } = await res.json();
-      if (ipfsErr) throw new Error(ipfsErr);
+      const { cid } = await res.json();
+      if (!cid || typeof cid !== "string") {
+        throw new Error("Invalid CID returned from IPFS");
+      }
 
-      // 2) Register on Solana using new Anchor methods API
-      const provider = new AnchorProvider(
-        connection,
-        wallet as any,
-        { preflightCommitment: "processed", commitment: "processed", skipPreflight: false }
-      );
-      const program = new Program(idl, idl.metadata.address, provider);
+      // Register on Ethereum
+      const codeBytes = ethers.utils.toUtf8Bytes(code).slice(0, 6);
+      const cidBytes = ethers.utils.toUtf8Bytes(cid);
+      const tx = await registryContract.register(codeBytes, cidBytes);
+      await tx.wait();
 
-      // use .methods.register instead of legacy rpc
-      await program.methods
-        .register(shortCode, Array.from(Buffer.from(cid)))
-        .accounts({ authority: wallet.publicKey!, systemProgram: SystemProgram.programId })
-        .rpc();
-
-      setShortUrl(`https://${window.location.host}/${shortCode}`);
+      setShortUrl(`${BASE}/${code}`);
     } catch (err: any) {
-      console.error("Shorten Error:", err);
-      setError(err.message.includes("IPFS") ? "IPFS upload failed." : "Solana registration failed.");
+      console.error("Error:", err);
+      setError(err.message || "Error shortening URL");
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +97,15 @@ export default function UrlShortener() {
               aria-invalid={error ? "true" : "false"}
               aria-describedby={error ? "url-error" : undefined}
             />
-            <LinkIcon className="h-6 w-6 text-gray-400 absolute right-5 top-1/2 -translate-y-1/2" aria-hidden="true" />
-            {error && <p id="url-error" className="text-red-500 text-sm mt-2">{error}</p>}
+            <LinkIcon
+              className="h-6 w-6 text-gray-400 absolute right-5 top-1/2 -translate-y-1/2"
+              aria-hidden="true"
+            />
+            {error && (
+              <p id="url-error" className="text-red-500 text-sm mt-2">
+                {error}
+              </p>
+            )}
           </div>
           <button
             type="submit"
@@ -113,7 +123,7 @@ export default function UrlShortener() {
               {shortUrl}
             </a>
             <button onClick={() => navigator.clipboard.writeText(shortUrl)}>
-              <ClipboardIcon className="h-6 w-6 text-purple-600" />
+              <ClipboardIcon className="h-6 w-6 text-purple-600 cursor-pointer" />
             </button>
           </div>
         )}

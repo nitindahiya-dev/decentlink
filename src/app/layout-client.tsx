@@ -1,13 +1,13 @@
-// src/app/layout-client.tsx
 "use client";
 import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { SolanaProvider } from "../components/ConnectWallet";
+import { WalletProvider } from "../components/WalletContext";
 
 export const metadata = {
+  metadataBase: new URL('http://localhost:3000'),
   title: "SillyLink",
-  description: "Web3 URL Shortener on Solana + IPFS",
+  description: "Web3 URL Shortener on Ethereum + IPFS",
 };
 
 export default function LayoutClient({
@@ -16,12 +16,12 @@ export default function LayoutClient({
   children: React.ReactNode
 }) {
   return (
-    <SolanaProvider>
+    <WalletProvider>
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
       </div>
-    </SolanaProvider>
+    </WalletProvider>
   );
 }

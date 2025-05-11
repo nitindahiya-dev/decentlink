@@ -2,13 +2,11 @@
 "use client";
 
 import Link from "next/link";
-
-// 1) Import the adapter-react-ui CSS exactly once in your app (you can also do this in _app.tsx or layout.tsx)
-import "@solana/wallet-adapter-react-ui/styles.css";
-
-import { ConnectWalletButton } from "./ConnectWallet";
+import { useWalletContext } from "../components/WalletContext";
 
 export default function Header() {
+  const { address, connect, disconnect } = useWalletContext();
+
   return (
     <header className="bg-primary p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
@@ -22,14 +20,24 @@ export default function Header() {
                 Home
               </Link>
             </li>
-            <li>
-              <Link href="/analytics" className="hover:underline text-secondary">
-                Analytics
-              </Link>
-            </li>
+            {address && (
+              <li>
+                <Link href="/analytics" className="hover:underline text-secondary">
+                  Analytics
+                </Link>
+              </li>
+            )}
           </ul>
-          {/* 2) Now the ConnectWalletButton will show the Phantom icon and open the modal */}
-          <ConnectWalletButton />
+
+          {address ? (
+            <button onClick={disconnect} className="cursor-pointer hover:underline text-secondary">
+              {address.slice(0, 6)}…{address.slice(-4)} (Disconnect)
+            </button>
+          ) : (
+            <button onClick={connect} className="cursor-pointer hover:underline text-secondary">
+              Connect Wallet
+            </button>
+          )}
         </nav>
       </div>
     </header>

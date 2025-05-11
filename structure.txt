@@ -1,27 +1,45 @@
 decentlink/
-├── contract/programs/registry/    ← Anchor program
-│   └── src/lib.rs
+├── contract/
+│   └── programs/
+│       └── registry/
+│           └── src/
+│               └── lib.rs              ← Anchor program
+├── prisma/
+│   └── schema.prisma                   ← Prisma schema
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   └── ipfs/
-│   │   │       └── add/
-│   │   │           └── route.ts   ← Pinata upload route
-│   │   ├── [shortCode]/page.tsx   ← resolver page
-│   │   ├── globals.css
+│   │   │   ├── ipfs/
+│   │   │   │   └── add/
+│   │   │   │       └── route.ts        ← Pinata upload route
+│   │   │   ├── users/
+│   │   │   │   └── route.ts            ← POST: register user
+│   │   │   └── analytics/
+│   │   │       └── route.ts            ← GET: user analytics
+│   │   ├── [shortCode]/
+│   │   │   └── page.tsx                ← Link resolver page
 │   │   ├── layout-client.tsx
 │   │   ├── layout.tsx
-│   │   └── page.tsx               ← main UI
-│   ├── analytics/page.tsx         ← Analytics UI
+│   │   ├── globals.css
+│   │   └── page.tsx                    ← Main UI
+│   ├── analytics/
+│   │   └── page.tsx                    ← Analytics UI page
 │   ├── components/
 │   │   ├── ConnectWallet.tsx
 │   │   ├── UrlShortener.tsx
-│   │   └── Header.tsx
-│   ├── idl/registry.json          ← Anchor IDL 
-│   └── lib/                       ← remove ipfs.ts from here
+│   │   ├── Header.tsx
+│   │   └── ui/
+│   │       ├── button.tsx             ← Button component (shadcn style)
+│   │       └── card.tsx               ← Optional: Card component (if needed)
+│   ├── idl/
+│   │   └── registry.json               ← Anchor IDL file
+│   └── lib/
+│       ├── prisma.ts                   ← Prisma client instance
+│       └── utils.ts                    ← Utility functions
 ├── Anchor.toml
 ├── package.json
-└── tailwind.config.ts
+├── tailwind.config.ts
+└── tsconfig.json
 
 
 
