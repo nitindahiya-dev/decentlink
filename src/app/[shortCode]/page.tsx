@@ -1,36 +1,33 @@
+// src/app/[shortCode]/page.tsx
 "use client";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useConnection } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
-import idl from "@/idl/registry.json";
+import { registryContract } from "../../utils/ethers";
+import { ethers } from "ethers";
 
 export default function Resolver() {
   const { shortCode } = useParams();
-  const { connection } = useConnection();
 
   useEffect(() => {
+    if (!shortCode) return;
     (async () => {
-      if (!shortCode) return;
+      // 1) Resolve the CID on-chain
+      const codeBytes = ethers.utils.toUtf8Bytes(shortCode).slice(0, 6);
+      const cidBytes: Uint8Array = await registryContract.resolve(codeBytes);
+      const cid = ethers.utils.toUtf8String(cidBytes);
 
-      const programId = new PublicKey(idl.metadata.address);
-      const [pda] = await PublicKey.findProgramAddress(
-        [Buffer.from(shortCode)], programId
-      );
+      // 2) Fetch the JSON from IPFS
+      const res = await fetch(`https://ipfs.io/ipfs/${cid}`);
+      if (!res.ok) {
+        console.error("Failed to fetch IPFS JSON", await res.text());
+        return;
+      }
+      const { url } = await res.json();  // { short, url }
 
-      const provider = new AnchorProvider(connection, null, {});
-      const program = new Program(idl, programId, provider);
-      const entry = await program.account.entry.fetch(pda);
-      const cid = Buffer.from(entry.cid).toString();
-
-      const res = await fetch(`https://ipfs.infura.io:5001/api/v0/cat?arg=${cid}`);
-      const json = await res.text();
-      const { url } = JSON.parse(json);
-
+      // 3) Redirect to the actual URL
       window.location.href = url;
     })();
-  }, [shortCode, connection]);
+  }, [shortCode]);
 
-  return <p>Redirecting…</p>;
+  return <p className="p-8 text-center">Redirecting…</p>;
 }

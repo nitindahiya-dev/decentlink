@@ -1,47 +1,21 @@
-// src/components/ConnectWallet.tsx
 "use client";
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
-import dynamic from "next/dynamic";
-import "@solana/wallet-adapter-react-ui/styles.css";
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from "@solana/wallet-adapter-react";
-import {
-  WalletModalProvider,
-} from "@solana/wallet-adapter-react-ui";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import {
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-  TorusWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
+export function ConnectWallet() {
+  const [address, setAddress] = useState<string>();
 
-// Dynamically import the WalletMultiButton to avoid SSR mismatches
-const WalletMultiButton = dynamic<{}>(
-  () => import("@solana/wallet-adapter-react-ui").then((mod) => mod.WalletMultiButton),
-  { ssr: false }
-);
-
-export function SolanaProvider({ children }: { children: React.ReactNode }) {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC!;
-
-  const wallets = [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter({ network }),
-    new TorusWalletAdapter({ params: { network } }),
-  ];
+  async function connect() {
+    if (!(window as any).ethereum) return alert("Install MetaMask");
+    await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+    const signer = provider.getSigner();
+    setAddress(await signer.getAddress());
+  }
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <button onClick={connect} className="btn">
+      {address ? address.slice(0,6)+"…"+address.slice(-4) : "Connect Wallet"}
+    </button>
   );
-}
-
-export function ConnectWalletButton() {
-  return <WalletMultiButton />;
 }
