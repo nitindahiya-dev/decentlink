@@ -43,6 +43,10 @@ decentlink/
 
 
 
+Use PostgreSQL for user management, link metadata, and analytics.
+Use Pinata for storing any associated content (like images or documents) that you want to keep decentralized.
+
+
 
 | Concern           | Decentralized Hybrid                                      
 |-------------------|---------------------------------------------------------------------------------------------------

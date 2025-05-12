@@ -9,7 +9,9 @@ const config = {
         primary: "#A76545",    // Terracotta
         secondary: "#FFA55D",  // Peach
         accent: "#FFDF88",     // Cream
-        success: "#ACC572"     // Sage
+        success: "#ACC572",     // Sage
+        'neon-blue': '#6366f1',
+        'neon-purple': '#8b5cf6',
       },
       animation: {
         "float": "float 6s ease-in-out infinite",
@@ -18,7 +20,10 @@ const config = {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" }
-        }
+        },
+        backdropBlur: {
+          'sm': '4px',
+        }  
       }
     },
   },
