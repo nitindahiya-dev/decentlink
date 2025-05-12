@@ -1,9 +1,11 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"      // or "mysql"/"sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -19,7 +21,29 @@ model Link {
   shortCode  String   @unique
   cid        String
   createdAt  DateTime @default(now())
-  clicks     Int      @default(0)
+  clicks     Click[]               // one-to-many click events
   owner      User     @relation(fields: [ownerId], references: [id])
   ownerId    String
+}
+
+model Click {
+  id        String   @id @default(cuid())
+  link      Link     @relation(fields: [linkId], references: [id])
+  linkId    String
+  createdAt DateTime @default(now())
+  device    DeviceType
+  source    SourceType
+  location  String
+}
+
+enum DeviceType {
+  MOBILE
+  DESKTOP
+  TABLET
+}
+
+enum SourceType {
+  DIRECT
+  SOCIAL
+  EMAIL
 }
