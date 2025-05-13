@@ -1,58 +1,50 @@
-// src/app/api/ipfs/add/route.ts
 import { NextResponse } from "next/server";
+import PinataSDK from "@pinata/sdk";
 
-// Load Pinata JWT from env
-const PINATA_KEY = process.env.PINATA_JWT!;
-if (!PINATA_KEY) {
-  throw new Error("Missing PINATA_KEY in environment");
-}
+const pinata = new PinataSDK({
+  pinataApiKey: process.env.PINATA_API_KEY,
+  pinataSecretApiKey: process.env.PINATA_SECRET_KEY,
+});
 
-export async function POST(req: Request) {
-  console.log("[IPFS Route] Starting POST handler");
-
+export async function POST(request: Request) {
   try {
-    const { short, url } = await req.json();
-    console.log("[IPFS Route] Request body:", { short, url });
+    const { short: shortCode, url } = await request.json();
 
-    const mapBlob = new Blob([
-      JSON.stringify({ short, url })
-    ], { type: "application/json" });
-    const formData = new FormData();
-    formData.append("file", mapBlob, "mapping.json");
-    console.log("[IPFS Route] FormData keys:", Array.from(formData.keys()));
-
-    // Send to Pinata
-    const res = await fetch(
-      "https://api.pinata.cloud/pinning/pinFileToIPFS",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PINATA_KEY}`,
-        },
-        body: formData,
-      }
-    );
-    console.log("[IPFS Route] HTTP status:", res.status, res.statusText);
-
-    const json = await res.json();
-    console.log("[IPFS Route] Pinata JSON response:", json);
-
-    if (!res.ok) {
-      const errMsg = json.error || JSON.stringify(json);
-      console.error("[IPFS Route] Pinata error:", errMsg);
-      return NextResponse.json({ error: errMsg }, { status: res.status });
+    // Validate inputs
+    if (!shortCode || !url) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const cid = json.IpfsHash;
-    console.log("[IPFS Route] Pinata IpfsHash:", cid);
-    if (!cid) {
-      console.error("[IPFS Route] No IpfsHash in response");
-      throw new Error("No IpfsHash returned");
+    const shortCodeRegex = /^[a-zA-Z0-9]{6,10}$/;
+    if (!shortCodeRegex.test(shortCode)) {
+      return NextResponse.json({ error: "Invalid shortCode format" }, { status: 400 });
     }
 
-    return NextResponse.json({ cid });
-  } catch (err: any) {
-    console.error("[IPFS Route] Error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    try {
+      new URL(url);
+    } catch {
+      return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
+    }
+
+    // Create JSON payload for Pinata
+    const payload = { short: shortCode, url };
+
+    // Upload to Pinata
+    const pinataResponse = await pinata.pinJSONToIPFS(payload, {
+      pinataMetadata: { name: "mapping.json" },
+      pinataOptions: { cidVersion: 0 }, // Ensure CIDv0 for compatibility
+    });
+
+    console.log("[IPFS Route] Pinata JSON response:", pinataResponse);
+    console.log("[IPFS Route] Pinata IpfsHash:", pinataResponse.IpfsHash);
+
+    if (!pinataResponse.IpfsHash || !pinataResponse.IpfsHash.startsWith("Qm")) {
+      throw new Error("Invalid CID returned from Pinata");
+    }
+
+    return NextResponse.json({ cid: pinataResponse.IpfsHash });
+  } catch (error: any) {
+    console.error("[IPFS Route] Error:", error);
+    return NextResponse.json({ error: "Failed to upload to IPFS", details: error.message }, { status: 500 });
   }
 }

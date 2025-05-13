@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import { WalletProvider } from "../components/WalletContext";
 
 export const metadata = {
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
   title: "SillyLink",
   description: "Web3 URL Shortener on Ethereum + IPFS",
 };

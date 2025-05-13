@@ -9,10 +9,9 @@ export default function UrlShortener() {
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const BASE = process.env.NEXT_PUBLIC_BASE_URL!;
 
-  // Check for Ethereum wallet (e.g., MetaMask)
   const hasWallet = typeof window !== "undefined" && window.ethereum;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
   function genCode(len = 6) {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -24,7 +23,6 @@ export default function UrlShortener() {
     setError("");
     setIsLoading(true);
 
-    // Validate URL
     if (!longUrl) {
       setError("Please enter a URL");
       setIsLoading(false);
@@ -38,39 +36,86 @@ export default function UrlShortener() {
       return;
     }
 
-    // Check wallet connection
     if (!hasWallet) {
       setError("Please connect an Ethereum wallet (e.g., MetaMask)");
       setIsLoading(false);
       return;
     }
 
-    const code = genCode();
-        try {
-      // Upload to IPFS
-      const res = await fetch("/api/ipfs/add", {
+    let address: string;
+    try {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      address = accounts[0];
+    } catch (err: any) {
+      setError("Failed to connect wallet");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const userRes = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ short: code, url: longUrl }),
+        body: JSON.stringify({ address }),
       });
-      if (!res.ok) {
-        const text = await res.text();
+      if (!userRes.ok) {
+        const errorText = await userRes.text();
+        throw new Error(errorText || "Failed to register user");
+      }
+      console.log("User registration response:", await userRes.json());
+    } catch (err: any) {
+      setError(err.message || "Error registering user");
+      setIsLoading(false);
+      return;
+    }
+
+    const shortCode = genCode();
+    try {
+      const ipfsRes = await fetch("/api/ipfs/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ short: shortCode, url: longUrl }),
+      });
+      if (!ipfsRes.ok) {
+        const text = await ipfsRes.text();
         throw new Error(text || "IPFS upload failed");
       }
-      const { cid } = await res.json();
+      const { cid } = await ipfsRes.json();
+      console.log("IPFS response:", { cid });
       if (!cid || typeof cid !== "string") {
         throw new Error("Invalid CID returned from IPFS");
       }
 
-      // Register on Ethereum
-      const codeBytes = ethers.utils.toUtf8Bytes(code).slice(0, 6);
-      const cidBytes = ethers.utils.toUtf8Bytes(cid);
-      const tx = await registryContract.register(codeBytes, cidBytes);
-      await tx.wait();
+      try {
+        const codeBytes = ethers.utils.toUtf8Bytes(shortCode).slice(0, 6);
+        const cidBytes = ethers.utils.toUtf8Bytes(cid);
+        const tx = await registryContract.register(codeBytes, cidBytes);
+        await tx.wait();
+        console.log("Ethereum transaction confirmed:", tx.hash);
+      } catch (err: any) {
+        console.error("Ethereum registration error:", err);
+        throw new Error("Failed to register link on Ethereum");
+      }
 
-      setShortUrl(`${BASE}/${code}`);
+      try {
+        const linkRes = await fetch("/api/links", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shortCode, cid, ownerAddress: address }),
+        });
+        if (!linkRes.ok) {
+          const text = await linkRes.text();
+          throw new Error(text || "Failed to save link");
+        }
+        console.log("Link creation response:", await linkRes.json());
+      } catch (err: any) {
+        console.error("Link creation error:", err);
+        throw new Error(err.message || "Failed to save link to database");
+      }
+
+      setShortUrl(`${baseUrl}/${shortCode}`);
     } catch (err: any) {
-      console.error("Error:", err);
+      console.error("Error shortening URL:", err);
       setError(err.message || "Error shortening URL");
     } finally {
       setIsLoading(false);
@@ -123,7 +168,7 @@ export default function UrlShortener() {
               {shortUrl}
             </a>
             <button onClick={() => navigator.clipboard.writeText(shortUrl)}>
-              <ClipboardIcon className="h-6 w-6 text-purple-600 cursor-pointer" />
+              <ClipboardIcon className="h-6 w-6 text-purple-600" />
             </button>
           </div>
         )}

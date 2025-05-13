@@ -1,67 +1,101 @@
-//src/app/[shortCode]/page.tsx
+import { notFound, redirect } from "next/navigation";
+import { prisma } from "../../lib/prisma";
+import { headers } from "next/headers";
+import UAParser from "ua-parser-js";
 
-"use client";
-import { useEffect } from "react";
-import { useParams } from "next/navigation";
-import { registryContract } from "../../utils/ethers"; // Adjust path if needed
-import { ethers } from "ethers";
+export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+};
 
-export default function Resolver() {
-  const { shortCode } = useParams();
+export const viewport = {
+  themeColor: "#4facfe",
+};
 
-  useEffect(() => {
-    if (!shortCode) return;
-    (async () => {
-      // 1) Resolve the CID on-chain
-      const codeBytes = ethers.utils.toUtf8Bytes(shortCode).slice(0, 6);
-      const cidBytes: Uint8Array = await registryContract.resolve(codeBytes);
-      const cid = ethers.utils.toUtf8String(cidBytes);
+export default async function ShortLinkPage({ params }: { params: Promise<{ shortCode: string }> }) {
+  const { shortCode } = await params;
 
-      // 2) Fetch the JSON from IPFS
-      const res = await fetch(`https://ipfs.io/ipfs/${cid}`);
-      if (!res.ok) {
-        console.error("Failed to fetch IPFS JSON", await res.text());
-        return;
-      }
-      const { url } = await res.json();
+  // Validate shortCode (alphanumeric, 6-10 characters)
+  const shortCodeRegex = /^[a-zA-Z0-9]{6,10}$/;
+  if (!shortCodeRegex.test(shortCode)) {
+    console.error(`Invalid shortCode: ${shortCode}`);
+    notFound();
+  }
 
-      // 3) Redirect to the actual URL
-      setTimeout(() => {
-        window.location.href = url;
-      }, 3000); // Wait 3s for animation
-    })();
-  }, [shortCode]);
+  // Fetch link by shortCode
+  const link = await prisma.link.findUnique({
+    where: { shortCode },
+    select: { id: true, cid: true },
+  });
 
-  return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white">
-      <svg
-        className="w-32 h-32 animate-pulse"
-        viewBox="0 0 100 100"
-        fill="none"
-      >
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          stroke="url(#gradient)"
-          strokeWidth="6"
-          fill="none"
-        />
-        <path
-          d="M30 50 H60 L50 40 M60 50 L50 60"
-          stroke="url(#gradient)"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <defs>
-          <linearGradient id="gradient" x1="0" y1="0" x2="100" y2="100">
-            <stop offset="0%" stopColor="#00f2fe" />
-            <stop offset="100%" stopColor="#4facfe" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <p className="mt-4 text-lg text-white animate-pulse">Teleporting you to the link…</p>
-    </div>
-  );
+  if (!link) {
+    notFound();
+  }
+
+  // Validate cid (IPFS CID format, supports CIDv0 and CIDv1)
+  const cidRegex = /^(Qm[1-9A-Za-z]{44}|[bcdf][a-zA-Z0-9+\/]{58,})$/;
+  if (!cidRegex.test(link.cid)) {
+    console.error(`Invalid CID: ${link.cid}`);
+    notFound();
+  }
+
+  // Detect device using ua-parser-js
+  let device: "MOBILE" | "DESKTOP" | "TABLET" = "DESKTOP"; // Default
+  try {
+    const headersList = await headers();
+    const userAgent = headersList.get("user-agent") || "";
+    console.log("User-Agent:", userAgent); // Debug
+    const parser = UAParser(userAgent); // Call as function
+    const deviceType = parser.getDevice().type;
+    if (deviceType === "mobile") {
+      device = "MOBILE";
+    } else if (deviceType === "tablet") {
+      device = "TABLET";
+    }
+  } catch (error) {
+    console.error("Device detection error:", error);
+    // Fallback to DESKTOP
+  }
+
+  // Record click
+  try {
+    const headersList = await headers(); // Re-await for safety
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/click`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        shortCode,
+        device,
+        source: headersList.get("referer") || "DIRECT",
+        location: "UNKNOWN", // Replace with IP geolocation in production
+      }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Click API error:", errorText);
+    }
+  } catch (error) {
+    console.error("Failed to record click:", error);
+    // Continue with redirection
+  }
+
+  // Fetch original URL from IPFS
+  let originalUrl = "";
+  try {
+    const ipfsBaseUrl = process.env.NODE_ENV === "production" ? "https://ipfs.io" : "http://ipfs.io";
+    const ipfsRes = await fetch(`${ipfsBaseUrl}/ipfs/${link.cid}`);
+    if (!ipfsRes.ok) {
+      throw new Error("Failed to fetch from IPFS");
+    }
+    const { url } = await ipfsRes.json();
+    if (!url || typeof url !== "string") {
+      throw new Error("Invalid URL in IPFS response");
+    }
+    originalUrl = url;
+  } catch (error) {
+    console.error("IPFS fetch error:", error);
+    originalUrl = "/";
+  }
+
+  // Redirect to original URL
+  redirect(originalUrl);
 }
