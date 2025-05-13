@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,25 +19,26 @@ model Link {
   shortCode  String   @unique
   cid        String
   createdAt  DateTime @default(now())
-  clicks     Click[]               // one-to-many click events
+  clicks     Click[]
   owner      User     @relation(fields: [ownerId], references: [id])
   ownerId    String
 }
 
 model Click {
   id        String   @id @default(cuid())
-  link      Link     @relation(fields: [linkId], references: [id])
   linkId    String
-  createdAt DateTime @default(now())
   device    DeviceType
-  source    SourceType
+  source    String
   location  String
+  createdAt DateTime @default(now())
+  link      Link     @relation(fields: [linkId], references: [id])
 }
 
 enum DeviceType {
   MOBILE
   DESKTOP
   TABLET
+  UNKNOWN
 }
 
 enum SourceType {
