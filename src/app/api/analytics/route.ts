@@ -1,3 +1,4 @@
+// src/app/api/analytics/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { subDays, format } from "date-fns";
@@ -14,11 +15,7 @@ export async function GET(request: Request) {
     const user = await prisma.user.findUnique({
       where: { address },
       include: {
-        links: {
-          include: {
-            clicks: true,
-          },
-        },
+        links: { include: { clicks: true } },
       },
     });
 
@@ -48,36 +45,26 @@ export async function GET(request: Request) {
       where: { link: { ownerId: user.id } },
       _count: { _all: true },
     });
-    const trafficData = traffic.map((t) => ({
-      name: t.source,
-      value: t._count._all,
-    }));
+    const trafficData = traffic.map((t) => ({ name: t.source, value: t._count._all }));
 
     const devices = await prisma.click.groupBy({
       by: ["device"],
       where: { link: { ownerId: user.id } },
       _count: { _all: true },
     });
-    const devicesData = devices.map((d) => ({
-      device: d.device,
-      clicks: d._count._all,
-    }));
+    const devicesData = devices.map((d) => ({ device: d.device, clicks: d._count._all }));
 
     const locations = await prisma.click.groupBy({
       by: ["location"],
       where: { link: { ownerId: user.id } },
       _count: { _all: true },
     });
-    const locationsData = locations.map((l) => ({
-      name: l.location,
-      clicks: l._count._all,
-    }));
+    const locationsData = locations.map((l) => ({ name: l.location, clicks: l._count._all }));
 
-    const topLinks = user.links.map((link) => ({
-      code: link.shortCode,
-      url: link.cid, // Adjust if URL is stored elsewhere
-      clicks: link.clicks.length,
-    })).sort((a, b) => b.clicks - a.clicks).slice(0, 5);
+    const topLinks = user.links
+      .map((link) => ({ code: link.shortCode, url: link.cid, clicks: link.clicks.length }))
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, 5);
 
     const performance = [
       { metric: "Avg. Click Time", value: "N/A" },
@@ -88,11 +75,7 @@ export async function GET(request: Request) {
       where: { link: { ownerId: user.id } },
       orderBy: { createdAt: "desc" },
       take: 5,
-      select: {
-        createdAt: true,
-        location: true,
-        device: true,
-      },
+      select: { createdAt: true, location: true, device: true },
     });
 
     return NextResponse.json({
@@ -107,11 +90,9 @@ export async function GET(request: Request) {
       hasLinks: user.links.length > 0,
     });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Analytics API Error:", error.message);
-    } else {
-      console.error("Analytics API Error:", error);
-    }
+    console.error("Analytics API Error:",
+      error instanceof Error ? error.message : error
+    );
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
