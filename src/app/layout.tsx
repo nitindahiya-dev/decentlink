@@ -4,8 +4,8 @@ import LayoutClient from './layout-client';
 
 export const metadata: Metadata = {
   title: {
-    default: "SillyLink",
-    template: "%s | SillyLink"
+    default: "decentlink",
+    template: "%s | decentlink"
   },
   description: "Your website's default description for SEO and social sharing.",
   keywords: ["keyword1", "keyword2", "keyword3"],
@@ -17,10 +17,10 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "SillyLink",
+    title: "decentlink",
     description: "Create memorable short links with advanced analytics and blockchain-powered security",
     url: "http://localhost:3000",
-    siteName: "SillyLink",
+    siteName: "decentlink",
     images: [
       {
         url: "/og-image.jpg",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SillyLink",
+    title: "decentlink",
     description: "Your website's default description for Twitter",
     images: ["/twitter-image.jpg"],
   },

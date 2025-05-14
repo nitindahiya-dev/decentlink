@@ -3,46 +3,57 @@ decentlink/
 │   └── programs/
 │       └── registry/
 │           └── src/
-│               └── lib.rs              ← Anchor program
+│               └── lib.rs              # Anchor program
 ├── prisma/
-│   └── schema.prisma                   ← Prisma schema
+│   └── schema.prisma                   # Prisma schema
 ├── src/
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── ipfs/
 │   │   │   │   └── add/
-│   │   │   │       └── route.ts        ← Pinata upload route
+│   │   │   │       └── route.ts        # Pinata upload route
 │   │   │   ├── users/
-│   │   │   │   └── route.ts            ← POST: register user
+│   │   │   │   └── route.ts            # POST: register user
 │   │   │   ├── click/
-│   │   │   │   └── route.ts            ← POST: register user
+│   │   │   │   └── route.ts            # POST: record click
+│   │   │   ├── links/
+│   │   │   │   └── route.ts            # POST: create link
 │   │   │   └── analytics/
-│   │   │       └── route.ts            ← GET: user analytics
+│   │   │       └── route.ts            # GET: user analytics
 │   │   ├── [shortCode]/
-│   │   │   └── page.tsx                ← Link resolver page
+│   │   │   └── page.tsx                # Link resolver page
+│   │   ├── analytics/
+│   │   │   └── page.tsx                # Updated Analytics UI page
 │   │   ├── layout-client.tsx
 │   │   ├── layout.tsx
 │   │   ├── globals.css
-│   │   └── page.tsx                    ← Main UI
-│   ├── analytics/
-│   │   └── page.tsx                    ← Analytics UI page
+│   │   ├── favicon.ico                 # Added favicon
+│   │   └── page.tsx                    # Main UI
 │   ├── components/
+│   │   ├── analytics/
+│   │   │   ├── AnalyticsCard.tsx       # Card component
+│   │   │   ├── AnalyticsGrid.tsx       # Grid of analytics cards
+│   │   │   ├── AnalyticsHeader.tsx     # Header with title
+│   │   │   ├── DisconnectButton.tsx    # Disconnect button
+│   │   │   ├── EmptyState.tsx          # No links/clicks state
+│   │   │   ├── ErrorMessage.tsx        # Error display
+│   │   │   └── LoadingSpinner.tsx      # Loading spinner
 │   │   ├── ConnectWallet.tsx
 │   │   ├── UrlShortener.tsx
 │   │   ├── Header.tsx
 │   │   └── ui/
-│   │       ├── button.tsx             ← Button component (shadcn style)
-│   │       └── card.tsx               ← Optional: Card component (if needed)
+│   │       ├── button.tsx             # Button component (shadcn style)
+│   │       └── card.tsx               # Optional: Card component
 │   ├── idl/
-│   │   └── registry.json               ← Anchor IDL file
+│   │   └── registry.json               # Anchor IDL file
 │   └── lib/
-│       ├── prisma.ts                   ← Prisma client instance
-│       └── utils.ts                    ← Utility functions
+│       ├── prisma.ts                   # Prisma client instance
+│       └── utils.ts                    # Utility functions
 ├── Anchor.toml
+├── next.config.js                      # Added for favicon rewrites
 ├── package.json
-├── tailwind.config.ts
+├── tailwind.config.ts                  # Updated for neon styles
 └── tsconfig.json
-
 
 
 Use PostgreSQL for user management, link metadata, and analytics.

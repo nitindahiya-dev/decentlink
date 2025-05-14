@@ -1,17 +1,9 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useWalletContext } from "../../components/WalletContext";
-import AnalyticsHeader from "../../components/analytics/AnalyticsHeader";
-import AnalyticsGrid from "../../components/analytics/AnalyticsGrid";
-import LoadingSpinner from "../../components/analytics/LoadingSpinner";
-import ErrorMessage from "../../components/analytics/ErrorMessage";
-import EmptyState from "../../components/analytics/EmptyState";
-import DisconnectButton from "../../components/analytics/DisconnectButton";
+import { useWalletContext } from "../components/WalletContext";
 
-export default function AnalyticsPage() {
-  const { address } = useWalletContext();
+export function useAnalytics() {
+  const { address, disconnect } = useWalletContext();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -60,23 +52,5 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, [address]);
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (error) {
-    return <ErrorMessage error={error} />;
-  }
-
-  if (!data || !data.hasLinks || data.totalClicks === 0) {
-    return <EmptyState hasLinks={data?.hasLinks ?? false} totalClicks={data?.totalClicks ?? 0} />;
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto p-4 space-y-8">
-      <AnalyticsHeader />
-      <AnalyticsGrid data={data} />
-      <DisconnectButton />
-    </div>
-  );
+  return { data, loading, error, address, disconnect, router };
 }

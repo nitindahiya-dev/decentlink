@@ -23,3 +23,9 @@ export function shortenAddress(address: string, chars = 4): string {
     return word.charAt(0).toUpperCase() + word.slice(1);
   }
   
+  export function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(
+      () => alert("Link copied to clipboard!"),
+      (err) => console.error("Failed to copy:", err)
+    );
+  }
