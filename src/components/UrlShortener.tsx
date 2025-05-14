@@ -33,7 +33,7 @@ export default function UrlShortener() {
   const [isLoading, setIsLoading] = useState(false);
 
   const hasWallet = typeof window !== "undefined" && window.ethereum;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   function genCode(len = 6) {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
