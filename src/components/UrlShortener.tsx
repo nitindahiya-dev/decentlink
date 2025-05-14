@@ -1,8 +1,30 @@
+
 "use client";
 import { useState } from "react";
 import { ClipboardIcon, LinkIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { registryContract } from "../utils/ethers";
 import { ethers } from "ethers";
+
+// Declare window.ethereum type
+interface Ethereum {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on: (event: string, callback: (...args: unknown[]) => void) => void;
+  removeListener: (event: string, callback: (...args: unknown[]) => void) => void;
+  isMetaMask?: boolean;
+}
+
+// Extend ethers ExternalProvider to match window.ethereum
+interface ExternalProvider extends Ethereum {
+  isMetaMask?: boolean;
+  isConnected?: () => boolean;
+  providers?: ExternalProvider[];
+}
+
+declare global {
+  interface Window {
+    ethereum?: ExternalProvider;
+  }
+}
 
 export default function UrlShortener() {
   const [longUrl, setLongUrl] = useState("");
@@ -44,9 +66,9 @@ export default function UrlShortener() {
 
     let address: string;
     try {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const accounts = await window.ethereum!.request({ method: "eth_requestAccounts" }) as string[];
       address = accounts[0];
-    } catch (err: any) {
+    } catch {
       setError("Failed to connect wallet");
       setIsLoading(false);
       return;
@@ -63,7 +85,8 @@ export default function UrlShortener() {
         throw new Error(errorText || "Failed to register user");
       }
       console.log("User registration response:", await userRes.json());
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       setError(err.message || "Error registering user");
       setIsLoading(false);
       return;
@@ -92,8 +115,8 @@ export default function UrlShortener() {
         const tx = await registryContract.register(codeBytes, cidBytes);
         await tx.wait();
         console.log("Ethereum transaction confirmed:", tx.hash);
-      } catch (err: any) {
-        console.error("Ethereum registration error:", err);
+      } catch (error: unknown) {
+        console.error("Ethereum registration error:", error);
         throw new Error("Failed to register link on Ethereum");
       }
 
@@ -108,15 +131,15 @@ export default function UrlShortener() {
           throw new Error(text || "Failed to save link");
         }
         console.log("Link creation response:", await linkRes.json());
-      } catch (err: any) {
-        console.error("Link creation error:", err);
-        throw new Error(err.message || "Failed to save link to database");
+      } catch (error: unknown) {
+        console.error("Link creation error:", error);
+        throw new Error((error as Error).message || "Failed to save link to database");
       }
 
       setShortUrl(`${baseUrl}/${shortCode}`);
-    } catch (err: any) {
-      console.error("Error shortening URL:", err);
-      setError(err.message || "Error shortening URL");
+    } catch (error: unknown) {
+      console.error("Error shortening URL:", error);
+      setError((error as Error).message || "Error shortening URL");
     } finally {
       setIsLoading(false);
     }

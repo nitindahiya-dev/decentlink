@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useWalletContext } from "../../components/WalletContext";
 
-export default function EmptyState({ hasLinks, totalClicks }: { hasLinks: boolean; totalClicks: number }) {
+export default function EmptyState({ hasLinks }: { hasLinks: boolean; totalClicks: number }) {
   const { disconnect } = useWalletContext();
   const router = useRouter();
 

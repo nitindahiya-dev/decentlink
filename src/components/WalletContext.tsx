@@ -25,7 +25,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (stored) setAddress(stored);
 
     // Listen for account changes
-    (window as any).ethereum?.on("accountsChanged", (accounts: string[]) => {
+    (window as Window & typeof globalThis & { ethereum?: { on: (event: string, callback: (accounts: string[]) => void) => void } }).ethereum?.on("accountsChanged", (accounts: string[]) => {
       if (accounts.length) {
         setAddress(accounts[0]);
         localStorage.setItem("walletAddress", accounts[0]);
@@ -37,11 +37,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const connect = async () => {
-    if (!(window as any).ethereum) {
+    interface Ethereum {
+      request: (args: { method: string }) => Promise<string[]>;
+      on: (event: string, callback: (accounts: string[]) => void) => void;
+    }
+
+    if (!(window as Window & typeof globalThis & { ethereum?: Ethereum }).ethereum) {
       alert("Install MetaMask");
       return;
     }
-    const [acc] = await window.ethereum.request({ method: "eth_requestAccounts" });
+    if (!window.ethereum) {
+      throw new Error("Ethereum object is not available on the window.");
+    }
+    const [acc] = (await window.ethereum.request({ method: "eth_requestAccounts" })) as string[];
     setAddress(acc);
     localStorage.setItem("walletAddress", acc);
   

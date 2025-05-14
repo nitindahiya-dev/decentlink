@@ -10,7 +10,7 @@ export default function AnalyticsCard({
   className = "",
 }: {
   title: string;
-  icon: React.ReactElement;
+  icon: React.ReactElement<React.SVGProps<SVGSVGElement>>; // accept SVG icons
   children: React.ReactNode;
   className?: string;
 }) {

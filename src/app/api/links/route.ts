@@ -39,8 +39,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, link });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Link Creation Error:", error);
+      return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 });
+    }
     console.error("Link Creation Error:", error);
-    return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

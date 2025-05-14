@@ -1,17 +1,24 @@
+// src/app/[shortCode]/page.tsx
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "../../lib/prisma";
 import { headers } from "next/headers";
-import UAParser from "ua-parser-js";
+import { UAParser } from "ua-parser-js";
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+  ),
 };
 
 export const viewport = {
   themeColor: "#4facfe",
 };
 
-export default async function ShortLinkPage({ params }: { params: Promise<{ shortCode: string }> }) {
+export default async function ShortLinkPage({
+  params,
+}: {
+  params: Promise<{ shortCode: string }>;
+}) {
   const { shortCode } = await params;
 
   // Validate shortCode (alphanumeric, 6-10 characters)
@@ -26,76 +33,63 @@ export default async function ShortLinkPage({ params }: { params: Promise<{ shor
     where: { shortCode },
     select: { id: true, cid: true },
   });
-
   if (!link) {
     notFound();
   }
 
-  // Validate cid (IPFS CID format, supports CIDv0 and CIDv1)
-  const cidRegex = /^(Qm[1-9A-Za-z]{44}|[bcdf][a-zA-Z0-9+\/]{58,})$/;
+  // Validate CID (IPFS CID format)
+  const cidRegex = /^(Qm[1-9A-Za-z]{44}|[bB][a-zA-Z0-9+\/]{58,})$/;
   if (!cidRegex.test(link.cid)) {
     console.error(`Invalid CID: ${link.cid}`);
     notFound();
   }
 
   // Detect device using ua-parser-js
-  let device: "MOBILE" | "DESKTOP" | "TABLET" = "DESKTOP"; // Default
+  let device: "MOBILE" | "DESKTOP" | "TABLET" = "DESKTOP";
   try {
-    const headersList = await headers();
-    const userAgent = headersList.get("user-agent") || "";
-    console.log("User-Agent:", userAgent); // Debug
-    const parser = UAParser(userAgent); // Call as function
-    const deviceType = parser.getDevice().type;
-    if (deviceType === "mobile") {
-      device = "MOBILE";
-    } else if (deviceType === "tablet") {
-      device = "TABLET";
-    }
-  } catch (error) {
-    console.error("Device detection error:", error);
-    // Fallback to DESKTOP
+    const hdrs = await headers();
+    const ua = hdrs.get("user-agent") || "";
+    console.log("User-Agent:", ua);
+    const parser = new UAParser(ua);
+    const type = parser.getDevice().type;
+    if (type === "mobile") device = "MOBILE";
+    else if (type === "tablet") device = "TABLET";
+  } catch (e) {
+    console.error("Device detection error:", e);
   }
 
   // Record click
   try {
-    const headersList = await headers(); // Re-await for safety
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/click`, {
+    const hdrs = await headers();
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/click`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         shortCode,
         device,
-        source: headersList.get("referer") || "DIRECT",
-        location: "UNKNOWN", // Replace with IP geolocation in production
+        source: hdrs.get("referer") || "DIRECT",
+        location: "UNKNOWN",
       }),
     });
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Click API error:", errorText);
-    }
-  } catch (error) {
-    console.error("Failed to record click:", error);
-    // Continue with redirection
+  } catch (e) {
+    console.error("Failed to record click:", e);
   }
 
   // Fetch original URL from IPFS
-  let originalUrl = "";
+  let originalUrl = "/";
   try {
-    const ipfsBaseUrl = process.env.NODE_ENV === "production" ? "https://ipfs.io" : "http://ipfs.io";
-    const ipfsRes = await fetch(`${ipfsBaseUrl}/ipfs/${link.cid}`);
-    if (!ipfsRes.ok) {
-      throw new Error("Failed to fetch from IPFS");
-    }
-    const { url } = await ipfsRes.json();
-    if (!url || typeof url !== "string") {
-      throw new Error("Invalid URL in IPFS response");
-    }
-    originalUrl = url;
-  } catch (error) {
-    console.error("IPFS fetch error:", error);
-    originalUrl = "/";
+    const ipfsBase =
+      process.env.NODE_ENV === "production"
+        ? "https://ipfs.io"
+        : "http://ipfs.io";
+    const res = await fetch(`${ipfsBase}/ipfs/${link.cid}`);
+    const { url } = await res.json();
+    if (typeof url === "string" && url) originalUrl = url;
+    else throw new Error("Invalid IPFS response");
+  } catch (e) {
+    console.error("IPFS fetch error:", e);
   }
 
-  // Redirect to original URL
+  // Redirect
   redirect(originalUrl);
 }

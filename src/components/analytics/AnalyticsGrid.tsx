@@ -12,9 +12,71 @@ import {
 } from "@heroicons/react/24/outline";
 import AnalyticsCard from "./AnalyticsCard";
 
+// Define types for data structure
+interface TimelineEntry {
+  day: string;
+  count: number;
+}
+
+interface TrafficSource {
+  name: string;
+  value: number;
+}
+
+interface Device {
+  device: string;
+  clicks: number;
+}
+
+interface Location {
+  name: string;
+  clicks: number;
+}
+
+interface TopLink {
+  code: string;
+  url: string;
+  clicks: number;
+}
+
+interface PerformanceMetric {
+  metric: string;
+  value: number;
+}
+
+interface RecentActivity {
+  createdAt: string;
+  location: string;
+  device: string;
+}
+
+interface SocialReferral {
+  platform: string;
+  clicks: number;
+}
+
+interface Revenue {
+  total: number;
+  conversions: number;
+}
+
+interface AnalyticsData {
+  totalClicks: number;
+  uniqueVisitors: number;
+  timeline: TimelineEntry[];
+  traffic: TrafficSource[];
+  devices: Device[];
+  locations: Location[];
+  topLinks: TopLink[];
+  performance: PerformanceMetric[];
+  recentActivity: RecentActivity[];
+  socialReferrals: SocialReferral[];
+  revenue: Revenue;
+}
+
 const COLORS = ["#6366f1", "#8b5cf6", "#a855f7"];
 
-export default function AnalyticsGrid({ data }: { data: any }) {
+export default function AnalyticsGrid({ data }: { data: AnalyticsData }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
       {/* Total Clicks */}
@@ -32,8 +94,8 @@ export default function AnalyticsGrid({ data }: { data: any }) {
           <span>↑ 8% MoM</span>
         </div>
       </AnalyticsCard>
-      {/* Unique Visitors */}
-      <AnalyticsCard title="Unique Visitors" icon={<UserGroupIcon />}>
+      {/* Referral */}
+      <AnalyticsCard title="Referral" icon={<UserGroupIcon />}>
         <div className="text-4xl font-bold">{data.uniqueVisitors}</div>
         <div className="flex items-center gap-2 mt-2 text-neon-blue text-sm">
           <span>↑ 8% MoM</span>
@@ -81,7 +143,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
                 outerRadius={80}
                 innerRadius={50}
               >
-                {data.traffic.map((_: any, i: number) => (
+                {data.traffic.map((entry: TrafficSource, i: number) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
@@ -97,7 +159,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
       {/* Device Usage */}
       <AnalyticsCard title="Device Usage" icon={<DevicePhoneMobileIcon />}>
         <div className="space-y-3">
-          {data.devices.map((d: any) => (
+          {data.devices.map((d: Device) => (
             <motion.div
               key={d.device}
               whileHover={{ x: 5 }}
@@ -113,7 +175,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
       {/* Global Reach */}
       <AnalyticsCard title="Global Reach" icon={<GlobeAltIcon />} className="md:col-span-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.locations.map((l: any) => (
+          {data.locations.map((l: Location) => (
             <div
               key={l.name}
               className="flex justify-between p-4 bg-gradient-to-r from-neon-blue/10 to-neon-purple/10 rounded-xl"
@@ -128,7 +190,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
       {/* Top Links */}
       <AnalyticsCard title="Top Links" icon={<LinkIcon />}>
         <div className="space-y-3">
-          {data.topLinks.map((l: any) => (
+          {data.topLinks.map((l: TopLink) => (
             <motion.div
               key={l.code}
               whileHover={{ scale: 1.02 }}
@@ -147,7 +209,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
       {/* Performance Metrics */}
       <AnalyticsCard title="Performance" icon={<ChartPieIcon />}>
         <div className="grid grid-cols-2 gap-4">
-          {data.performance.map((m: any) => (
+          {data.performance.map((m: PerformanceMetric) => (
             <div
               key={m.metric}
               className="text-center p-4 bg-gradient-to-br from-neon-blue/10 to-neon-purple/10 rounded-xl"
@@ -162,7 +224,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
       {/* Recent Activity */}
       <AnalyticsCard title="Recent Activity" icon={<ClockIcon />}>
         <div className="space-y-3">
-          {data.recentActivity.map((a: any) => (
+          {data.recentActivity.map((a: RecentActivity) => (
             <div
               key={a.createdAt}
               className="flex justify-between p-3 bg-neon-purple/10 rounded-lg"
@@ -180,7 +242,7 @@ export default function AnalyticsGrid({ data }: { data: any }) {
       {/* Social Referrals */}
       <AnalyticsCard title="Social Referrals" icon={<ShareIcon />} className="md:col-span-2">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {data.socialReferrals.map((s: any) => (
+          {data.socialReferrals.map((s: SocialReferral) => (
             <div key={s.platform} className="text-center p-4 bg-neon-purple/10 rounded-xl">
               <div className="text-2xl font-bold">{s.clicks}</div>
               <div className="text-sm text-gray-600">{s.platform}</div>

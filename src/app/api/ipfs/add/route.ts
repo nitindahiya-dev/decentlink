@@ -43,8 +43,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ cid: pinataResponse.IpfsHash });
-  } catch (error: any) {
-    console.error("[IPFS Route] Error:", error);
-    return NextResponse.json({ error: "Failed to upload to IPFS", details: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: "Failed to upload to IPFS", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+    } else {
+      return NextResponse.json({ error: "Failed to upload to IPFS", details: "Unknown error" }, { status: 500 });
+    }
   }
 }

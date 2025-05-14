@@ -46,6 +46,8 @@ decentlink/
 │   │       └── card.tsx               # Optional: Card component
 │   ├── idl/
 │   │   └── registry.json               # Anchor IDL file
+│   └── utils/
+│   │   └── ethers.ts
 │   └── lib/
 │       ├── prisma.ts                   # Prisma client instance
 │       └── utils.ts                    # Utility functions

@@ -106,8 +106,12 @@ export async function GET(request: Request) {
       recentActivity: recentActivity.length ? recentActivity : [],
       hasLinks: user.links.length > 0,
     });
-  } catch (error: any) {
-    console.error("Analytics API Error:", error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Analytics API Error:", error.message);
+    } else {
+      console.error("Analytics API Error:", error);
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

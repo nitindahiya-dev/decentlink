@@ -5,7 +5,14 @@ import { useWalletContext } from "../components/WalletContext";
 export function useAnalytics() {
   const { address, disconnect } = useWalletContext();
   const router = useRouter();
-  const [data, setData] = useState<any>(null);
+  interface AnalyticsData {
+    uniqueVisitors: number;
+    socialReferrals: { platform: string; clicks: number }[];
+    revenue: { total: number; conversions: number };
+    totalClicks: number;
+  }
+
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,9 +48,11 @@ export function useAnalytics() {
           ],
           revenue: analyticsData.revenue ?? { total: 0, conversions: 0 },
         });
-      } catch (err: any) {
-        console.error("Fetch Analytics Error:", err);
-        setError(err.message || "An error occurred while loading analytics");
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Fetch Analytics Error:", err);
+          setError(err.message || "An error occurred while loading analytics");
+        }
       } finally {
         setLoading(false);
       }

@@ -16,7 +16,7 @@ export default function DisconnectButton() {
           disconnect();
           router.push("/");
         }}
-        className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl shadow-neon-red"
+        className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 cursor-pointer text-white rounded-xl shadow-neon-red"
       >
         Disconnect & Return Home
       </button>

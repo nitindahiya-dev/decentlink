@@ -1,5 +1,7 @@
+// src/app/api/click/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { DeviceType, SourceType } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
@@ -15,13 +17,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid shortCode format" }, { status: 400 });
     }
 
-    const validDevices = ["MOBILE", "DESKTOP", "TABLET"];
-    if (!validDevices.includes(device)) {
-      return NextResponse.json({ error: `Invalid device type. Expected one of: ${validDevices.join(", ")}` }, { status: 400 });
+    // Validate device against Prisma enum
+    if (!Object.values(DeviceType).includes(device as DeviceType)) {
+      return NextResponse.json({
+        error: `Invalid device type. Expected one of: ${Object.values(DeviceType).join(", ")}`,
+      }, { status: 400 });
     }
 
-    if (typeof source !== "string" || source.length > 255) {
-      return NextResponse.json({ error: "Invalid source format" }, { status: 400 });
+    // Validate source against Prisma enum
+    if (!Object.values(SourceType).includes(source as SourceType)) {
+      return NextResponse.json({
+        error: `Invalid source type. Expected one of: ${Object.values(SourceType).join(", ")}`,
+      }, { status: 400 });
     }
 
     if (typeof location !== "string" || location.length > 100) {
@@ -30,22 +37,22 @@ export async function POST(request: Request) {
 
     const link = await prisma.link.findUnique({ where: { shortCode } });
     if (!link) {
-      console.error(`Link not found for shortCode: ${shortCode}`);
       return NextResponse.json({ error: "Link not found" }, { status: 404 });
     }
 
     const click = await prisma.click.create({
       data: {
         linkId: link.id,
-        device,
-        source,
+        device: device as DeviceType,
+        source: source as SourceType,
         location,
       },
     });
 
     return NextResponse.json({ success: true, click });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Click API Error:", error);
-    return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: "Internal server error", details: message }, { status: 500 });
   }
 }
